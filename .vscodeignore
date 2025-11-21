@@ -14,3 +14,10 @@ webpack.config.js
 **/*.ts
 **/.vscode-test.*
 pnpm-lock.yaml
+webview-ui/src/**
+webview-ui/node_modules/**
+webview-ui/index.html
+webview-ui/*.json
+webview-ui/*.js
+!webview-ui/build/**
+

@@ -36,6 +36,8 @@ export interface UsageExample {
     lineNumber: number;
     /** Code context including surrounding lines */
     context: string;
+    /** Programming language (optional) */
+    language?: string;
 }
 
 /**

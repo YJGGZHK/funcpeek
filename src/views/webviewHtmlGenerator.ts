@@ -271,6 +271,18 @@ export class WebviewHtmlGenerator {
                     flex-wrap: wrap;
                 }
 
+                .file-link {
+                    color: var(--vscode-textLink-foreground);
+                    text-decoration: none;
+                    font-weight: 600;
+                    cursor: pointer;
+                }
+
+                .file-link:hover {
+                    text-decoration: underline;
+                    color: var(--vscode-textLink-activeForeground);
+                }
+
                 @media (max-width: 600px) {
                     body {
                         padding: 12px;
@@ -343,15 +355,78 @@ export class WebviewHtmlGenerator {
         return `<div class="section">
                     <div class="section-title">Parameters</div>
                     <div class="parameters">
-                        ${functionInfo.parameters.map(param =>
-                            `<div class="parameter">${this.escapeHtml(param)}</div>`
-                        ).join('')}
+                        ${functionInfo.parameters.map(param => {
+                            // Remove destructuring braces and extract individual parameters
+                            const cleanParam = this.cleanParameterDisplay(param);
+                            return `<div class="parameter"><code>${this.escapeHtml(cleanParam)}</code></div>`;
+                        }).join('')}
                     </div>
                 </div>`;
     }
 
     /**
-     * Generate real usages section
+     * Clean parameter display - remove unnecessary braces and format nicely
+     */
+    private static cleanParameterDisplay(param: string): string {
+        let cleaned = param.trim();
+
+        // Handle destructured parameters like "{ children, isBatch, count, onConfirm }"
+        // or "{ children, isBatch, count, onConfirm }: Props"
+        if (cleaned.startsWith('{')) {
+            // Find the matching closing brace
+            let braceDepth = 0;
+            let closingBraceIndex = -1;
+
+            for (let i = 0; i < cleaned.length; i++) {
+                if (cleaned[i] === '{') braceDepth++;
+                if (cleaned[i] === '}') {
+                    braceDepth--;
+                    if (braceDepth === 0) {
+                        closingBraceIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            if (closingBraceIndex !== -1) {
+                // Extract the content within braces
+                const innerContent = cleaned.slice(1, closingBraceIndex).trim();
+                // Get any type annotation after the braces
+                const typeAnnotation = cleaned.slice(closingBraceIndex + 1).trim();
+
+                // Split by comma but respect nested braces
+                const parts: string[] = [];
+                let current = '';
+                let depth = 0;
+
+                for (const char of innerContent) {
+                    if (char === '{') depth++;
+                    if (char === '}') depth--;
+
+                    if (char === ',' && depth === 0) {
+                        if (current.trim()) {
+                            parts.push(current.trim());
+                        }
+                        current = '';
+                    } else {
+                        current += char;
+                    }
+                }
+                if (current.trim()) {
+                    parts.push(current.trim());
+                }
+
+                // Join the parts and add type annotation if present
+                const joined = parts.join(', ');
+                return typeAnnotation ? `${joined}${typeAnnotation}` : joined;
+            }
+        }
+
+        return cleaned;
+    }
+
+    /**
+     * Generate real usages section with clickable file links
      */
     private static generateRealUsagesSection(realUsages: UsageExample[]): string {
         if (realUsages.length === 0) {
@@ -363,14 +438,23 @@ export class WebviewHtmlGenerator {
                     ${realUsages.map(usage => `
                         <div class="usage-item">
                             <div class="history-header">
-                                <span class="function-name">${this.getRelativePath(usage.filePath)}:${usage.lineNumber}</span>
+                                <a href="#" class="file-link" onclick="openFile('${this.escapeForJs(usage.filePath)}', ${usage.lineNumber}); return false;">
+                                    ${this.getRelativePath(usage.filePath)}:${usage.lineNumber}
+                                </a>
                             </div>
                             <div class="code-block">
-                                <code>${this.escapeHtml(usage.context)}</code>
+                                <pre><code class="language-${usage.language || 'typescript'}">${this.escapeHtml(usage.context)}</code></pre>
                             </div>
                         </div>
                     `).join('')}
                 </div>`;
+    }
+
+    /**
+     * Escape string for use in JavaScript
+     */
+    private static escapeForJs(text: string): string {
+        return text.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
     }
 
     /**
@@ -406,6 +490,34 @@ export class WebviewHtmlGenerator {
         return `<script>
                 const vscode = acquireVsCodeApi();
 
+                // Simple syntax highlighting
+                function highlightCode() {
+                    document.querySelectorAll('code.language-typescript, code.language-javascript').forEach(block => {
+                        if (block.classList.contains('highlighted')) return;
+
+                        let html = block.textContent;
+
+                        // Keywords
+                        html = html.replace(/\\b(function|const|let|var|if|else|for|while|return|class|interface|type|import|export|from|async|await|public|private|protected|static)\\b/g,
+                            '<span style="color: #569CD6;">$1</span>');
+
+                        // Strings
+                        html = html.replace(/(['"\`])(?:(?=(\\\\?))\\2.)*?\\1/g,
+                            '<span style="color: #CE9178;">$&</span>');
+
+                        // Comments
+                        html = html.replace(/\\/\\/.*$/gm,
+                            '<span style="color: #6A9955;">$&</span>');
+
+                        // Numbers
+                        html = html.replace(/\\b(\\d+)\\b/g,
+                            '<span style="color: #B5CEA8;">$1</span>');
+
+                        block.innerHTML = html;
+                        block.classList.add('highlighted');
+                    });
+                }
+
                 function copyCode() {
                     const code = document.getElementById('usage-code').textContent;
                     navigator.clipboard.writeText(code).then(() => {
@@ -434,6 +546,14 @@ export class WebviewHtmlGenerator {
                     });
                 }
 
+                function openFile(filePath, lineNumber) {
+                    vscode.postMessage({
+                        command: 'openFile',
+                        filePath: filePath,
+                        lineNumber: lineNumber
+                    });
+                }
+
                 window.addEventListener('message', event => {
                     const message = event.data;
                     switch (message.command) {
@@ -444,6 +564,7 @@ export class WebviewHtmlGenerator {
                                 button.disabled = false;
                                 button.textContent = 'Generate with AI';
                             }
+                            highlightCode();
                             break;
                         case 'generationError':
                             const aiButton = document.querySelector('.ai-button');
@@ -454,6 +575,10 @@ export class WebviewHtmlGenerator {
                             break;
                     }
                 });
+
+                // Apply syntax highlighting on load
+                document.addEventListener('DOMContentLoaded', highlightCode);
+                highlightCode();
             </script>`;
     }
 

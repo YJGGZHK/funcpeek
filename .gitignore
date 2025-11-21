@@ -3,3 +3,13 @@ dist
 node_modules
 .vscode-test/
 *.vsix
+
+# Development and testing files
+tests/*.ts
+docs/development/*.md
+docs/testing/*.md
+
+# Temporary files
+*.log
+*.tmp
+.DS_Store

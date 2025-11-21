@@ -15,6 +15,17 @@ export class AIService {
 
     constructor() {
         this.config = this.loadConfig();
+
+        // Listen for configuration changes and reload
+        vscode.workspace.onDidChangeConfiguration(e => {
+            if (e.affectsConfiguration(CONFIG_NAMESPACE)) {
+                this.config = this.loadConfig();
+                console.log('[FuncPeek AI] Configuration reloaded:', {
+                    enabled: this.config.enabled,
+                    hasApiKey: this.config.apiKey.length > 0
+                });
+            }
+        });
     }
 
     /**

@@ -4,6 +4,7 @@
 
 import * as vscode from 'vscode';
 import { FunctionAnalyzer } from './analyzers/functionAnalyzer';
+import { SymbolAnalyzer } from './analyzers/symbolAnalyzer';
 import { CodeHistoryManager } from './managers/codeHistoryManager';
 import { WebviewProvider } from './views/webviewProvider';
 import { AIService } from './services/aiService';
@@ -85,29 +86,25 @@ async function handlePeekFunction(
     }
 
     try {
-        // Try to analyze as function first, passing the selected text
-        let functionInfo = FunctionAnalyzer.analyzeSelectedFunction(editor, selectedText);
+        // Try to analyze as function first
+        let symbolInfo = FunctionAnalyzer.analyzeSelectedFunction(editor, selectedText);
 
-        // If no function found and selection is just a simple identifier,
-        // use it as-is for searching
-        if (!functionInfo && /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(selectedText)) {
-            // This is a simple identifier (class name, variable name, etc.)
-            functionInfo = {
-                name: selectedText,
-                signature: selectedText,
-                parameters: [],
-                returnType: 'unknown',
-                language: editor.document.languageId,
-                filePath: editor.document.fileName,
-                lineNumber: selection.start.line + 1
-            };
-        } else if (!functionInfo) {
+        // If no function found, use enhanced symbol analyzer for all types
+        if (!symbolInfo && /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(selectedText)) {
+            // Detect what type of symbol this is
+            const symbolType = SymbolAnalyzer.detectSymbolType(editor, selectedText);
+
+            // Create symbol info based on detected type
+            symbolInfo = SymbolAnalyzer.createSymbolInfo(editor, selectedText, symbolType);
+
+            console.log('[FuncPeek] Detected symbol type:', symbolType, 'for:', selectedText);
+        } else if (!symbolInfo) {
             // Not a valid function or identifier
             vscode.window.showWarningMessage(`"${selectedText}" is not a valid symbol to search`);
             return;
         }
 
-        const searchInfo = functionInfo;
+        const searchInfo = symbolInfo;
 
         await vscode.window.withProgress(
             {
@@ -121,7 +118,7 @@ async function handlePeekFunction(
                 const hasParams = searchInfo.parameters && searchInfo.parameters.length > 0;
                 const usage = hasParams
                     ? FunctionAnalyzer.generateUsageExample(searchInfo)
-                    : `// References for: ${searchInfo.name}`;
+                    : `// References for: ${searchInfo.name}\n// Type: ${searchInfo.returnType}\n// Signature: ${searchInfo.signature}`;
 
                 // Find real usage examples using VSCode's reference provider first
                 progress.report({ message: 'Searching for references...' });
@@ -203,10 +200,14 @@ async function handleGenerateWithAI(
     aiService: AIService,
     historyManager: CodeHistoryManager
 ): Promise<void> {
-    const editor = vscode.window.activeTextEditor;
+    // Try to get the stored source editor first, fallback to active editor
+    let editor = webviewProvider.getSourceEditor();
+    if (!editor || !editor.document) {
+        editor = vscode.window.activeTextEditor;
+    }
 
     if (!editor) {
-        vscode.window.showErrorMessage('No active editor found');
+        vscode.window.showErrorMessage('No active editor found. Please click on a code file first.');
         webviewProvider.notifyError();
         return;
     }
@@ -229,12 +230,25 @@ async function handleGenerateWithAI(
         vscode.window.showInformationMessage('Generating usage example with AI...');
 
         const document = editor.document;
-        const selection = editor.selection;
-        let sourceCode = document.getText(selection);
+        // Find the function/symbol in the document
+        const fullText = document.getText();
+        let sourceCode = '';
 
-        // Expand source code if too short
-        if (sourceCode.length < WEBVIEW.MIN_SOURCE_CODE_LENGTH) {
-            sourceCode = expandSourceCode(document, selection);
+        // Try to find the symbol definition in the document
+        const symbolName = functionInfo.name;
+        const symbolIndex = fullText.indexOf(symbolName);
+
+        if (symbolIndex >= 0) {
+            // Get surrounding context (5 lines before and after)
+            const position = document.positionAt(symbolIndex);
+            sourceCode = expandSourceCode(document, new vscode.Selection(position, position));
+        } else {
+            // Fallback: use the whole document or a reasonable subset
+            const lineCount = document.lineCount;
+            const startLine = Math.max(0, functionInfo.lineNumber - 10);
+            const endLine = Math.min(lineCount - 1, functionInfo.lineNumber + 10);
+            const range = new vscode.Range(startLine, 0, endLine, document.lineAt(endLine).text.length);
+            sourceCode = document.getText(range);
         }
 
         // Find real usages for AI context

@@ -5,7 +5,7 @@
 import * as vscode from 'vscode';
 import { FunctionInfo, UsageExample, HistoryEntry } from '../types';
 import { WEBVIEW, COMMANDS } from '../config/constants';
-import { WebviewHtmlGenerator } from './webviewHtmlGenerator';
+import { WebviewHtmlGenerator } from './webviewHtmlGeneratorReact';
 import { logError } from '../utils/errors';
 
 /**
@@ -13,6 +13,8 @@ import { logError } from '../utils/errors';
  */
 export class WebviewProvider {
     private currentPanel: vscode.WebviewPanel | undefined;
+    private currentFunctionInfo: FunctionInfo | undefined;
+    private sourceEditor: vscode.TextEditor | undefined;
 
     constructor(private context: vscode.ExtensionContext) {}
 
@@ -32,6 +34,10 @@ export class WebviewProvider {
         realUsages: UsageExample[] = []
     ): void {
         try {
+            // Store the current active editor before showing webview
+            this.sourceEditor = vscode.window.activeTextEditor;
+            this.currentFunctionInfo = functionInfo;
+
             if (this.currentPanel) {
                 this.currentPanel.reveal(vscode.ViewColumn.Beside);
             } else {
@@ -79,7 +85,7 @@ export class WebviewProvider {
         }
 
         this.currentPanel.webview.onDidReceiveMessage(
-            message => {
+            async message => {
                 switch (message.command) {
                     case 'generateWithAI':
                         vscode.commands.executeCommand(COMMANDS.GENERATE_WITH_AI, functionInfo);
@@ -87,11 +93,41 @@ export class WebviewProvider {
                     case 'openAISettings':
                         vscode.commands.executeCommand('workbench.action.openSettings', 'funcpeek.ai');
                         break;
+                    case 'openFile':
+                        await this.openFileAtLine(message.filePath, message.lineNumber);
+                        break;
                 }
             },
             null,
             this.context.subscriptions
         );
+    }
+
+    /**
+     * Open file at specific line
+     */
+    private async openFileAtLine(filePath: string, lineNumber: number): Promise<void> {
+        try {
+            console.log('[FuncPeek] Opening file:', filePath, 'at line:', lineNumber);
+            const uri = vscode.Uri.file(filePath);
+            const document = await vscode.workspace.openTextDocument(uri);
+            const editor = await vscode.window.showTextDocument(document, {
+                viewColumn: vscode.ViewColumn.One,
+                preserveFocus: false
+            });
+
+            // Move cursor to the line and reveal it
+            const line = Math.max(0, lineNumber - 1); // Convert to 0-based
+            const position = new vscode.Position(line, 0);
+            editor.selection = new vscode.Selection(position, position);
+            editor.revealRange(new vscode.Range(position, position), vscode.TextEditorRevealType.InCenter);
+
+            console.log('[FuncPeek] Successfully opened file at line:', line + 1);
+        } catch (error) {
+            console.error('[FuncPeek] Error opening file:', error);
+            logError('Error opening file', error);
+            vscode.window.showErrorMessage(`Failed to open file: ${filePath}`);
+        }
     }
 
     /**
@@ -109,6 +145,8 @@ export class WebviewProvider {
         }
 
         this.currentPanel.webview.html = WebviewHtmlGenerator.generate(
+            this.currentPanel.webview,
+            this.context.extensionUri,
             functionInfo,
             usage,
             history,
@@ -139,5 +177,19 @@ export class WebviewProvider {
                 command: 'generationError'
             });
         }
+    }
+
+    /**
+     * Get the source editor that was active when the webview was shown
+     */
+    public getSourceEditor(): vscode.TextEditor | undefined {
+        return this.sourceEditor;
+    }
+
+    /**
+     * Get the current function info
+     */
+    public getCurrentFunctionInfo(): FunctionInfo | undefined {
+        return this.currentFunctionInfo;
     }
 }
