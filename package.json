@@ -1,0 +1,103 @@
+{
+  "name": "funcpeek",
+  "displayName": "FuncPeek - Code Usage Finder",
+  "description": "Find usage examples for any selected code - functions, variables, constants, classes",
+  "publisher": "funcpeek",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.105.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "funcpeek.peekFunction",
+        "title": "Find Usage Examples"
+      },
+      {
+        "command": "funcpeek.clearHistory",
+        "title": "Clear Search History"
+      }
+    ],
+    "configuration": {
+      "title": "FuncPeek",
+      "properties": {
+        "funcpeek.ai.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable AI-powered usage example generation"
+        },
+        "funcpeek.ai.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "OpenAI API Key (or compatible API key)"
+        },
+        "funcpeek.ai.endpoint": {
+          "type": "string",
+          "default": "https://api.openai.com/v1",
+          "description": "API endpoint URL (default: OpenAI, can be changed to compatible services)"
+        },
+        "funcpeek.ai.model": {
+          "type": "string",
+          "default": "gpt-3.5-turbo",
+          "description": "AI model to use for generation"
+        }
+      }
+    },
+    "menus": {
+      "editor/context": [
+        {
+          "command": "funcpeek.peekFunction",
+          "when": "editorHasSelection",
+          "group": "navigation"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "funcpeek.peekFunction",
+        "key": "ctrl+shift+p",
+        "mac": "cmd+shift+p",
+        "when": "editorHasSelection"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "pnpm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "pnpm run compile-tests && pnpm run compile && pnpm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test",
+    "vsce:package": "vsce package",
+    "vsce:publish": "vsce publish",
+    "build": "pnpm run compile",
+    "build:prod": "pnpm run package",
+    "create-vsix": "pnpm run build:prod && pnpm run vsce:package",
+    "install-local": "code --install-extension funcpeek-0.0.1.vsix",
+    "uninstall": "code --uninstall-extension funcpeek.funcpeek",
+    "clean": "rm -rf dist out *.vsix",
+    "reinstall": "pnpm run uninstall && pnpm run create-vsix && pnpm run install-local"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "@types/vscode": "^1.105.0",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2",
+    "@vscode/vsce": "^3.7.0",
+    "eslint": "^9.39.1",
+    "ts-loader": "^9.5.4",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.3",
+    "webpack": "^5.102.1",
+    "webpack-cli": "^6.0.1"
+  }
+}
