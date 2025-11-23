@@ -13,16 +13,6 @@ export class FunctionAnalysisError extends Error {
 }
 
 /**
- * Custom error for usage finding failures
- */
-export class UsageFinderError extends Error {
-    constructor(message: string) {
-        super(message);
-        this.name = 'UsageFinderError';
-    }
-}
-
-/**
  * Custom error for AI service failures
  */
 export class AIServiceError extends Error {

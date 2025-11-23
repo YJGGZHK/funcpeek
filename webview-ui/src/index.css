@@ -78,7 +78,6 @@
   pre[class*="language-"] code[class*="language-"] span[style*="background"],
   pre[class*="language-"] code[class*="language-"] > span[style*="background"] {
     background-color: transparent !important;
-    background: transparent !important;
   }
   
   /* Remove background from pre and code containers but keep the main background */

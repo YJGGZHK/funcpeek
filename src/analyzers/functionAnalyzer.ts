@@ -3,7 +3,7 @@
  */
 
 import * as vscode from 'vscode';
-import { FunctionInfo } from '../types';
+import type { FunctionInfo } from '../types';
 import { getLanguagePatterns, buildSimpleMethodPatterns, cleanFunctionName } from '../utils/patterns';
 import { FunctionAnalysisError } from '../utils/errors';
 

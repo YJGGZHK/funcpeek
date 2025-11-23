@@ -5,7 +5,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { FunctionInfo, UsageExample, HistoryEntry } from '../types';
+import type { FunctionInfo, UsageExample, HistoryEntry } from '../types';
 
 /**
  * Generates HTML content for React webview display

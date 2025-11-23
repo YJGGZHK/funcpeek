@@ -3,7 +3,7 @@
  */
 
 import * as vscode from 'vscode';
-import { FunctionInfo, UsageExample, HistoryEntry } from '../types';
+import type { FunctionInfo, UsageExample, HistoryEntry } from '../types';
 import { WEBVIEW, COMMANDS } from '../config/constants';
 import { WebviewHtmlGenerator } from './webviewHtmlGeneratorReact';
 import { logError } from '../utils/errors';

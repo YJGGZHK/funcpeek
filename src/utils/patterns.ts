@@ -2,7 +2,6 @@
  * Language-specific pattern definitions for function detection
  */
 
-import { SupportedLanguage, PatternType } from '../types';
 
 /**
  * Pattern definition for a specific language

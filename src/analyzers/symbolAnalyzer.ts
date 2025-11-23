@@ -4,7 +4,7 @@
  */
 
 import * as vscode from 'vscode';
-import { FunctionInfo } from '../types';
+import type { FunctionInfo } from '../types';
 
 /**
  * Symbol types that can be detected

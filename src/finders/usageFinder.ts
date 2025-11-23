@@ -3,10 +3,10 @@
  */
 
 import * as vscode from 'vscode';
-import { FunctionInfo, UsageExample } from '../types';
+import type { FunctionInfo, UsageExample } from '../types';
 import { USAGE_FINDER } from '../config/constants';
 import { escapeRegex } from '../utils/patterns';
-import { logError, safeAsync } from '../utils/errors';
+import { logError } from '../utils/errors';
 
 /**
  * Finds usage examples of functions and variables in the workspace

@@ -1,150 +1,179 @@
-# FuncPeek - Function Usage Helper
+# FuncPeek 🚀
 
-FuncPeek is a VS Code extension that helps developers quickly understand function usage by providing intelligent examples and method signatures when you select code.
+一个智能的VS Code扩展，帮助开发者快速理解和使用代码库中的函数、类、方法等各种符号。通过AI驱动的使用示例生成和实时代码搜索，让代码探索变得前所未有的简单。
 
-## Features
+## ✨ 核心功能
 
-- **Smart Function Detection**: Automatically recognizes functions, methods, and arrow functions in TypeScript, JavaScript, Python, and Java
-  - Supports **partial selection**: just select the function name (e.g., `greetUser`, `constructor`)
-  - Works with access modifiers (e.g., `public showFunctionUsage`, `private getWebviewContent`)
-  - Recognizes all function styles: class methods, arrow functions, regular functions
-  - Works with method declarations and function definitions
-- **Real Usage Examples from Codebase**: Automatically searches your codebase for actual usage examples
-  - Uses VSCode's reference finder for accurate results
-  - Shows context around each usage (with surrounding code lines)
-  - Displays file path and line numbers for easy navigation
-  - Helps you understand how the function is actually being used in your project
-- **AI-Powered Usage Generation**: Use OpenAI-compatible APIs to generate intelligent, context-aware usage examples
-  - Analyzes real usage examples from your codebase
-  - Generates examples that follow your project's coding patterns
-  - Provides comprehensive explanations and comments
-- **Intelligent Usage Examples**: Generates context-aware usage examples based on function parameters and return types
-- **Usage History**: Keeps track of your function usage patterns for quick reference
-- **Multi-language Support**: Works with TypeScript, JavaScript, Python, and Java
-- **Beautiful Webview Display**: Shows function information in a clean, organized panel
-- **Easy Integration**: Right-click context menu and keyboard shortcuts
+- **🔍 智能符号检测**：支持函数、类、接口、变量、常量、枚举等各种代码符号
+- **🎯 实时代码搜索**：在代码库中查找实际使用示例
+- **🤖 AI使用示例生成**：基于OpenAI API生成智能使用示例
+- **📚 使用历史记录**：跟踪和保存函数使用历史
+- **⚡ 多语言支持**：TypeScript、JavaScript、Python、Java
+- **🎨 现代化界面**：基于React的美观Webview界面
 
-## How to Use
+## 📦 安装
 
-### Basic Usage
+### 从VS Code扩展市场安装（推荐）
 
-1. **Select a function** in your code editor (you can select the entire function or just the method name)
-2. **Right-click** and choose "Peek Function Usage" from the context menu
-3. **Or use keyboard shortcut**: `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (Mac)
-4. **View the usage example** in the side panel
+1. 打开VS Code
+2. 按 `Ctrl/Cmd + Shift + X` 打开扩展面板
+3. 搜索 "FuncPeek"
+4. 点击安装
 
-### AI-Powered Usage Generation
-
-To use AI-powered usage generation:
-
-1. **Configure AI Settings**:
-   - Open VS Code Settings (File > Preferences > Settings)
-   - Search for "FuncPeek"
-   - Set the following:
-     - `funcpeek.ai.enabled`: Set to `true`
-     - `funcpeek.ai.apiKey`: Enter your OpenAI API key (or compatible API key)
-     - `funcpeek.ai.endpoint`: Default is `https://api.openai.com/v1` (can be changed to compatible services like Azure OpenAI, LocalAI, etc.)
-     - `funcpeek.ai.model`: Default is `gpt-3.5-turbo` (can be changed to other models)
-
-2. **Generate AI Usage**:
-   - After selecting a function and viewing the usage panel
-   - Click the "Generate with AI" button
-   - Wait for the AI to analyze the function and generate a more intelligent usage example
-
-The AI will analyze the function's code, parameters, and context to generate more realistic and practical usage examples.
-
-## Supported Languages
-
-- TypeScript (.ts, .tsx)
-- JavaScript (.js, .jsx)
-- Python (.py)
-- Java (.java)
-
-## Example
-
-When you select a function like:
-```typescript
-function calculateTotal(items: Item[], discount?: number): number {
-    // function implementation
-}
-```
-
-FuncPeek will show you:
-- Function signature: `calculateTotal(items: Item[], discount?: number): number`
-- Usage example: `const result = calculateTotal([], 0.1);`
-- Parameter details
-- Return type information
-- Recent usage history
-
-## Commands
-
-- `FuncPeek: Peek Function Usage` - Show function usage for selected code
-- `FuncPeek: Clear Function History` - Clear the usage history
-
-## Configuration
-
-Configure FuncPeek in VS Code settings:
-
-- `funcpeek.ai.enabled` (boolean, default: `false`): Enable AI-powered usage generation
-- `funcpeek.ai.apiKey` (string, default: `""`): Your OpenAI API key or compatible API key
-- `funcpeek.ai.endpoint` (string, default: `"https://api.openai.com/v1"`): API endpoint URL (supports OpenAI and compatible services)
-- `funcpeek.ai.model` (string, default: `"gpt-3.5-turbo"`): AI model to use for generation
-
-## Installation
-
-1. Install from VS Code Marketplace (when published)
-2. Or install locally by:
-   - Clone this repository
-   - Run `pnpm install`
-   - Press `F5` to run in a new Extension Development Host window
-
-## Project Structure
-
-The extension is organized into modular components for better maintainability:
-
-```text
-src/
-├── analyzers/        # Function analysis and detection
-├── finders/          # Usage example finders
-├── managers/         # State and history management
-├── services/         # External service integrations (AI)
-├── views/            # UI components and HTML generation
-├── config/           # Configuration and constants
-├── types/            # TypeScript type definitions
-├── utils/            # Utility functions and helpers
-└── extension.ts      # Main entry point
-```
-
-## Documentation
-
-完整文档请查看项目仓库的 `docs/` 目录。
-
-## Development
-
-To contribute or modify this extension:
+### 手动安装
 
 ```bash
-# Install dependencies
+# 克隆仓库
+cd funcpeek
+
+# 安装依赖
 pnpm install
 
-# Compile and watch for changes
-pnpm run watch
-
-# Run tests
-pnpm run test
-
-# Package the extension
+# 构建扩展
 pnpm run package
+
+# 在VS Code中安装扩展
+# 1. 打开VS Code
+# 2. 按 Ctrl/Cmd+Shift+P
+# 3. 输入 "Extensions: Install from VSIX..."
+# 4. 选择生成的 funcpeek-*.vsix 文件
 ```
 
-### Code Quality
+## 🚀 快速开始
 
-- Full TypeScript type safety (no `any` types)
-- Comprehensive error handling with custom error classes
-- JSDoc documentation on all public methods
-- Modular architecture with clear separation of concerns
-- Centralized configuration management
+1. **基本使用**：
+   - 在代码编辑器中选择要查看的函数名或符号
+   - 按 `Ctrl/Cmd+Shift+P` 打开命令面板
+   - 输入并执行 "FuncPeek: Peek Function Usage"
+   - 查看函数信息和用法示例
 
-## License
+2. **AI功能**（可选）：
+   - 配置OpenAI API密钥
+   - 在扩展设置中启用AI功能
+   - 获得更智能的使用示例生成
 
-MIT License
+## ⚙️ 配置
+
+### AI服务配置
+
+在VS Code设置中搜索 `funcpeek`，配置以下选项：
+
+- `funcpeek.ai.enabled`: 启用/禁用AI功能
+- `funcpeek.ai.apiKey`: OpenAI API密钥
+- `funcpeek.ai.endpoint`: API端点（默认为OpenAI）
+- `funcpeek.ai.model`: AI模型（默认为gpt-3.5-turbo）
+
+### 环境变量配置
+
+你也可以通过环境变量配置：
+
+```bash
+export FUNCPEEK_AI_API_KEY="your-api-key"
+export FUNCPEEK_AI_ENDPOINT="https://api.openai.com/v1"
+export FUNCPEEK_AI_MODEL="gpt-3.5-turbo"
+```
+
+## 🛠️ 开发
+
+### 环境要求
+
+- Node.js 18+
+- pnpm 8+
+- VS Code 1.75+
+
+### 开发设置
+
+```bash
+# 安装依赖
+pnpm install
+
+# 启动开发模式
+pnpm run watch
+
+# 在VS Code中按F5启动扩展开发主机
+```
+
+### 构建和打包
+
+```bash
+# 构建扩展
+pnpm run compile
+
+# 打包扩展
+pnpm run package
+
+# 创建VSIX安装包
+pnpm run create-vsix
+```
+
+### 运行测试
+
+```bash
+# 运行所有测试
+pnpm run test
+
+# 运行代码检查
+pnpm run lint
+
+# 修复代码风格问题
+pnpm run lint --fix
+```
+
+## 📁 项目结构
+
+```text
+funcpeek/
+├── src/                    # 扩展源代码
+│   ├── analyzers/         # 函数分析器
+│   ├── config/            # 配置常量
+│   ├── finders/           # 使用示例查找器
+│   ├── managers/          # 状态管理
+│   ├── services/          # 外部服务集成
+│   ├── types/             # TypeScript类型定义
+│   ├── utils/             # 工具函数
+│   └── views/             # UI组件
+├── webview-ui/            # React前端
+│   ├── src/               # React源代码
+│   └── build/             # 构建输出
+├── docs/                  # 文档
+├── dist/                  # 扩展构建输出
+└── out/                   # 测试构建输出
+```
+
+## 🤝 贡献
+
+我们欢迎所有形式的贡献！请查看 [CONTRIBUTING.md](CONTRIBUTING.md) 了解如何参与项目开发。
+
+### 快速贡献指南
+
+1. Fork 项目
+2. 创建特性分支 (`git checkout -b feature/amazing-feature`)
+3. 提交更改 (`git commit -m 'Add some amazing feature'`)
+4. 推送到分支 (`git push origin feature/amazing-feature`)
+5. 创建 Pull Request
+
+## 📝 更新日志
+
+查看 [CHANGELOG.md](docs/CHANGELOG.md) 了解项目的更新历史。
+
+
+### 报告问题时请包含
+
+- VS Code版本
+- 扩展版本
+- 操作系统
+- 问题描述
+- 复现步骤
+- 相关代码示例（如果适用）
+
+## 🎯 路线图
+
+- [ ] 支持更多编程语言（C++, Go, Rust）
+- [ ] 集成更多AI服务（Claude, Gemini）
+- [ ] 添加代码片段收藏功能
+- [ ] 支持团队协作和分享
+- [ ] 添加性能分析功能
+
+## 📄 许可证
+
+本项目基于 [MIT 许可证](LICENSE) 开源。

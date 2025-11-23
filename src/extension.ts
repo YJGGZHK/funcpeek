@@ -3,13 +3,13 @@
  */
 
 import * as vscode from 'vscode';
+import type { UsageExample } from './types';
 import { FunctionAnalyzer } from './analyzers/functionAnalyzer';
 import { SymbolAnalyzer } from './analyzers/symbolAnalyzer';
 import { CodeHistoryManager } from './managers/codeHistoryManager';
 import { WebviewProvider } from './views/webviewProvider';
 import { AIService } from './services/aiService';
 import { UsageFinder } from './finders/usageFinder';
-import { UsageExample } from './types';
 import { COMMANDS, WEBVIEW } from './config/constants';
 import { getErrorMessage, logError } from './utils/errors';
 
@@ -133,12 +133,6 @@ async function handlePeekFunction(
                         : `// References for: ${searchInfo.name}\n// Type: ${searchInfo.returnType}\n// Signature: ${searchInfo.signature}`;
                 }
 
-                // If we are using a real usage example, make sure we have the file path and line number for it
-                // This allows clicking the "Usage Example" card to jump to the source
-                if (realUsages && realUsages.length > 0) {
-                    // Update webview state to know where this usage came from
-                    // We pass this via a new property in the message or state
-                }
 
                 // Load history
                 progress.report({ message: 'Loading history...' });
@@ -334,5 +328,5 @@ async function handleClearHistory(historyManager: CodeHistoryManager): Promise<v
  * Deactivate the extension
  */
 export function deactivate(): void {
-    // Cleanup if needed
+    // Extension cleanup is handled by VS Code
 }

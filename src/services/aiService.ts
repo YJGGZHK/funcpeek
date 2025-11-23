@@ -3,7 +3,7 @@
  */
 
 import * as vscode from 'vscode';
-import { FunctionInfo, UsageExample, AIConfig } from '../types';
+import type { FunctionInfo, UsageExample, AIConfig } from '../types';
 import { AI_SERVICE, AI_CONFIG_KEYS, CONFIG_NAMESPACE } from '../config/constants';
 import { AIServiceError, logError } from '../utils/errors';
 

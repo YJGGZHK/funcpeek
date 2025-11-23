@@ -3,7 +3,7 @@
  */
 
 import * as vscode from 'vscode';
-import { FunctionInfo, HistoryEntry } from '../types';
+import type { FunctionInfo, HistoryEntry } from '../types';
 import { HISTORY } from '../config/constants';
 import { logError } from '../utils/errors';
 
