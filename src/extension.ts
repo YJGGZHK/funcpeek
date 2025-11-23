@@ -95,7 +95,7 @@ async function handlePeekFunction(
             const symbolType = SymbolAnalyzer.detectSymbolType(editor, selectedText);
 
             // Create symbol info based on detected type
-            symbolInfo = SymbolAnalyzer.createSymbolInfo(editor, selectedText, symbolType);
+            symbolInfo = await SymbolAnalyzer.createSymbolInfo(editor, selectedText, symbolType);
 
             console.log('[FuncPeek] Detected symbol type:', symbolType, 'for:', selectedText);
         } else if (!symbolInfo) {
@@ -115,14 +115,30 @@ async function handlePeekFunction(
             async (progress) => {
                 // Generate basic usage
                 progress.report({ message: 'Generating usage example...' });
-                const hasParams = searchInfo.parameters && searchInfo.parameters.length > 0;
-                const usage = hasParams
-                    ? FunctionAnalyzer.generateUsageExample(searchInfo)
-                    : `// References for: ${searchInfo.name}\n// Type: ${searchInfo.returnType}\n// Signature: ${searchInfo.signature}`;
-
+                
                 // Find real usage examples using VSCode's reference provider first
                 progress.report({ message: 'Searching for references...' });
                 const realUsages = await findRealUsagesEnhanced(editor, searchInfo);
+
+                // Prefer real usage if available, otherwise generate synthetic one
+                let usage = '';
+                if (realUsages && realUsages.length > 0) {
+                    // Use the first real usage as the primary example
+                    usage = realUsages[0].context;
+                } else {
+                    // Fallback to synthetic generation
+                    const hasParams = searchInfo.parameters && searchInfo.parameters.length > 0;
+                    usage = hasParams
+                        ? FunctionAnalyzer.generateUsageExample(searchInfo)
+                        : `// References for: ${searchInfo.name}\n// Type: ${searchInfo.returnType}\n// Signature: ${searchInfo.signature}`;
+                }
+
+                // If we are using a real usage example, make sure we have the file path and line number for it
+                // This allows clicking the "Usage Example" card to jump to the source
+                if (realUsages && realUsages.length > 0) {
+                    // Update webview state to know where this usage came from
+                    // We pass this via a new property in the message or state
+                }
 
                 // Load history
                 progress.report({ message: 'Loading history...' });
@@ -133,12 +149,23 @@ async function handlePeekFunction(
 
                 // Show webview
                 const aiEnabled = aiService.isEnabled();
+                
+                // Determine usage location if available
+                let usageLocation = undefined;
+                if (realUsages && realUsages.length > 0) {
+                    usageLocation = {
+                        filePath: realUsages[0].filePath,
+                        lineNumber: realUsages[0].lineNumber
+                    };
+                }
+
                 webviewProvider.showFunctionUsage(
                     searchInfo,
                     usage,
                     functionHistory,
                     aiEnabled,
-                    realUsages
+                    realUsages,
+                    usageLocation
                 );
             }
         );
@@ -227,7 +254,9 @@ async function handleGenerateWithAI(
     }
 
     try {
-        vscode.window.showInformationMessage('Generating usage example with AI...');
+        // Set generating state and clear previous content immediately
+        webviewProvider.setGenerating(true);
+        webviewProvider.updateAIGenerated('');
 
         const document = editor.document;
         // Find the function/symbol in the document
@@ -254,16 +283,22 @@ async function handleGenerateWithAI(
         // Find real usages for AI context
         const realUsages = await UsageFinder.findUsagesInWorkspace(functionInfo);
 
-        // Generate with AI
-        const aiUsage = await aiService.generateUsageExample(functionInfo, sourceCode, realUsages);
-
-        // Update webview
-        webviewProvider.updateUsage(aiUsage);
+        // Generate with AI using streaming
+        const aiUsage = await aiService.generateUsageExampleStream(
+            functionInfo,
+            sourceCode,
+            realUsages,
+            (chunk: string) => {
+                // Update webview with each chunk
+                webviewProvider.appendAIGeneratedChunk(chunk);
+            }
+        );
 
         // Save to history
         await historyManager.saveFunctionUsage(functionInfo, aiUsage);
 
-        vscode.window.showInformationMessage('AI-generated usage example ready!');
+        // Stop generating state
+        webviewProvider.setGenerating(false);
 
     } catch (error) {
         logError('Error generating with AI', error);

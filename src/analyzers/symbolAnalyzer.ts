@@ -94,14 +94,45 @@ export class SymbolAnalyzer {
     /**
      * Create symbol info for any type of code element
      */
-    public static createSymbolInfo(
+    public static async createSymbolInfo(
         editor: vscode.TextEditor,
         symbolName: string,
         symbolType: SymbolType
-    ): FunctionInfo {
+    ): Promise<FunctionInfo> {
         const document = editor.document;
         const selection = editor.selection;
         const lineText = document.lineAt(selection.start.line).text;
+
+        // Default location is current selection
+        let filePath = document.fileName;
+        let lineNumber = selection.start.line + 1;
+
+        // If we are referencing a type/interface/class that is defined elsewhere
+        // we should try to find its definition
+        if (symbolType === SymbolType.Type || 
+            symbolType === SymbolType.Interface || 
+            symbolType === SymbolType.Class) {
+            
+            // Try to find definition
+            try {
+                const definitions = await vscode.commands.executeCommand<vscode.Location[]>(
+                    'vscode.executeDefinitionProvider',
+                    document.uri,
+                    selection.active
+                );
+
+                if (definitions && definitions.length > 0) {
+                    const def = definitions[0];
+                    filePath = def.uri.fsPath;
+                    lineNumber = def.range.start.line + 1;
+                    
+                    // If definition is in another file, we might want to read it to get better signature
+                    // but for now we stick with what we have or basic info
+                }
+            } catch (e) {
+                console.log('Error finding definition:', e);
+            }
+        }
 
         // Extract type information if available
         const typeInfo = this.extractTypeInfo(lineText, symbolName);
@@ -112,8 +143,8 @@ export class SymbolAnalyzer {
             parameters: typeInfo.parameters || [],
             returnType: typeInfo.returnType || this.getDefaultReturnType(symbolType),
             language: document.languageId,
-            filePath: document.fileName,
-            lineNumber: selection.start.line + 1
+            filePath,
+            lineNumber
         };
     }
 

@@ -25,9 +25,9 @@ export const USAGE_FINDER = {
     /** Maximum usages per file */
     MAX_USAGES_PER_FILE: 3,
     /** Number of context lines before usage */
-    CONTEXT_LINES_BEFORE: 2,
+    CONTEXT_LINES_BEFORE: 5,
     /** Number of context lines after usage */
-    CONTEXT_LINES_AFTER: 2,
+    CONTEXT_LINES_AFTER: 10,
     /** File patterns to search */
     FILE_PATTERNS: '**/*.{ts,tsx,js,jsx,py,java}',
     /** Patterns to exclude from search - 空字符串表示不排除任何文件 */
@@ -45,7 +45,7 @@ export const AI_SERVICE = {
     /** Default temperature */
     DEFAULT_TEMPERATURE: 0.7,
     /** Maximum tokens for response */
-    MAX_TOKENS: 500,
+    MAX_TOKENS: 1500,
     /** Maximum real usage examples to include in prompt */
     MAX_REAL_USAGES_IN_PROMPT: 3,
 } as const;

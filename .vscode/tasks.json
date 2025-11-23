@@ -6,7 +6,15 @@
 		{
 			"type": "npm",
 			"script": "watch",
-			"problemMatcher": "$ts-webpack-watch",
+			"problemMatcher": {
+				"owner": "typescript",
+				"pattern": "$tsc",
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": "webpack [0-9\\.]+ compiled",
+					"endsPattern": "webpack [0-9\\.]+ compiled successfully"
+				}
+			},
 			"isBackground": true,
 			"presentation": {
 				"reveal": "never",

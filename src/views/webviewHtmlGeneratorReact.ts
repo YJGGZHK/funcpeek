@@ -21,7 +21,8 @@ export class WebviewHtmlGenerator {
         usage: string,
         history: HistoryEntry[],
         aiEnabled: boolean,
-        realUsages: UsageExample[]
+        realUsages: UsageExample[],
+        usageLocation?: { filePath: string; lineNumber: number }
     ): string {
         const buildPath = path.join(extensionUri.fsPath, 'webview-ui', 'build');
 
@@ -40,9 +41,12 @@ export class WebviewHtmlGenerator {
         const initialState = {
             functionInfo,
             usage,
+            usageLocation,
             history,
             aiEnabled,
-            realUsages
+            realUsages,
+            aiGenerated: undefined,
+            isGenerating: false
         };
 
         // Add CSP and initial state

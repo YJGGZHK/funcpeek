@@ -65,7 +65,7 @@ export class UsageFinder {
             const lines = text.split('\n');
 
             const callPattern = new RegExp(
-                `(?:^|[^\\w.])${escapeRegex(functionName)}\\s*\\(`,
+                `(?:^|[^\\w.])(${escapeRegex(functionName)})\\s*(?:\\(|<|\\{|:|$)`,
                 'g'
             );
 
@@ -177,12 +177,64 @@ export class UsageFinder {
 
     /**
      * Extract context lines from document
+     * Tries to capture the surrounding function/block scope if possible
      */
     private static extractContextLines(document: vscode.TextDocument, lineNumber: number): string[] {
-        const startLine = Math.max(0, lineNumber - USAGE_FINDER.CONTEXT_LINES_BEFORE);
-        const endLine = Math.min(document.lineCount - 1, lineNumber + USAGE_FINDER.CONTEXT_LINES_AFTER);
-        const contextLines: string[] = [];
+        // First get a broader context to analyze structure
+        const searchStart = Math.max(0, lineNumber - 20);
+        const searchEnd = Math.min(document.lineCount - 1, lineNumber + 20);
+        
+        // Find the start of the block (e.g. "export const buildPoster = ... {")
+        let startLine = Math.max(0, lineNumber - USAGE_FINDER.CONTEXT_LINES_BEFORE);
+        
+        // Look upwards for the start of the function/block
+        for (let i = lineNumber; i >= searchStart; i--) {
+            const text = document.lineAt(i).text;
+            // Matches function definitions, variable assignments with arrow functions, etc.
+            if (/^(\s*)(export\s+)?(async\s+)?(function|const|let|var|class)\s+[\w\d_]+/.test(text) || 
+                text.includes('=> {') || 
+                (text.includes(') {') && !text.trim().startsWith('if') && !text.trim().startsWith('for') && !text.trim().startsWith('while'))) {
+                startLine = i;
+                break;
+            }
+        }
 
+        // Calculate indentation of the start line
+        const startLineText = document.lineAt(startLine).text;
+        const baseIndentation = startLineText.match(/^\s*/)?.[0] || '';
+        
+        // Find the end of the block by matching indentation of closing brace
+        let endLine = Math.min(document.lineCount - 1, lineNumber + USAGE_FINDER.CONTEXT_LINES_AFTER);
+        
+        // Look downwards for the end of the block
+        // We look for a closing brace '}' that has the same or less indentation as the start line
+        // and is on its own line or at the end of a line
+        let braceCount = 0;
+        let foundStart = false;
+
+        for (let i = startLine; i <= searchEnd; i++) {
+            const text = document.lineAt(i).text;
+            
+            // Count braces to handle nested blocks
+            const openBraces = (text.match(/\{/g) || []).length;
+            const closeBraces = (text.match(/\}/g) || []).length;
+            
+            if (openBraces > 0) foundStart = true;
+            braceCount += openBraces - closeBraces;
+
+            // If we found the start and brace count returns to 0 (or less), we found the end
+            if (foundStart && braceCount <= 0) {
+                endLine = i;
+                break;
+            }
+        }
+        
+        // Ensure we have at least some context after the usage line if we didn't find a clear block end
+        if (endLine < lineNumber + 2) {
+            endLine = Math.min(document.lineCount - 1, lineNumber + USAGE_FINDER.CONTEXT_LINES_AFTER);
+        }
+
+        const contextLines: string[] = [];
         for (let i = startLine; i <= endLine; i++) {
             contextLines.push(document.lineAt(i).text);
         }

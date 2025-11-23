@@ -3,7 +3,6 @@ import { WebviewState, WebviewMessage } from './types';
 import { useVSCodeMessage } from './hooks/useVSCodeApi';
 import { FunctionInfo } from './components/FunctionInfo';
 import { UsageExample } from './components/UsageExample';
-import { Parameters } from './components/Parameters';
 import { RealUsages } from './components/RealUsages';
 import { History } from './components/History';
 import './index.css';
@@ -22,16 +21,46 @@ function App() {
     const message = event.data;
     switch (message.command) {
       case 'updateUsage':
-        if (message.usage && state) {
-          setState({ ...state, usage: message.usage });
-        }
+        setState(prevState => {
+          if (!prevState || !message.usage) return prevState;
+          return { ...prevState, usage: message.usage };
+        });
+        break;
+      case 'updateAIGenerated':
+        setState(prevState => {
+          if (!prevState) return prevState;
+          return { 
+            ...prevState, 
+            aiGenerated: message.aiGenerated || '',
+            isGenerating: true
+          };
+        });
+        break;
+      case 'appendAIGeneratedChunk':
+        setState(prevState => {
+          if (!prevState || !message.chunk) return prevState;
+          return { 
+            ...prevState, 
+            aiGenerated: (prevState.aiGenerated || '') + message.chunk,
+            isGenerating: true
+          };
+        });
+        break;
+      case 'setGenerating':
+        setState(prevState => {
+          if (!prevState) return prevState;
+          return { ...prevState, isGenerating: message.isGenerating ?? false };
+        });
         break;
       case 'generationError':
-        // Handle error state if needed
+        setState(prevState => {
+          if (!prevState) return prevState;
+          return { ...prevState, isGenerating: false };
+        });
         console.error('AI generation error');
         break;
     }
-  }, [state]);
+  }, []);
 
   useVSCodeMessage(handleMessage);
 
@@ -48,8 +77,13 @@ function App() {
   return (
     <div className="min-h-screen p-4 md:p-6 space-y-6">
       <FunctionInfo functionInfo={state.functionInfo} />
-      <UsageExample usage={state.usage} aiEnabled={state.aiEnabled} />
-      <Parameters parameters={state.functionInfo.parameters} />
+      <UsageExample 
+        usage={state.usage} 
+        aiEnabled={state.aiEnabled} 
+        usageLocation={state.usageLocation}
+        aiGenerated={state.aiGenerated}
+        isGenerating={state.isGenerating}
+      />
       <RealUsages realUsages={state.realUsages} />
       <History history={state.history} />
     </div>

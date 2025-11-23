@@ -193,7 +193,10 @@ export class FunctionAnalyzer {
      * Build function signature string
      */
     private static buildSignature(name: string, parameters: string, returnType: string): string {
-        return `${name}(${parameters})${returnType !== 'void' ? `: ${returnType}` : ''}`;
+        // Remove type annotations from parameters if they make the string too long?
+        // For now, we keep them to show full info
+        const params = parameters.replace(/[\n\r\s]+/g, ' ').trim();
+        return `${name}(${params})${returnType !== 'void' ? `: ${returnType}` : ''}`;
     }
 
     /**

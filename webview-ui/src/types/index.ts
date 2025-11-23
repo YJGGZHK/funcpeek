@@ -24,9 +24,15 @@ export interface HistoryEntry {
 export interface WebviewState {
   functionInfo: FunctionInfo;
   usage: string;
+  usageLocation?: { // Optional location for the primary usage example
+    filePath: string;
+    lineNumber: number;
+  };
   history: HistoryEntry[];
   aiEnabled: boolean;
   realUsages: UsageExample[];
+  aiGenerated?: string; // AI generated content
+  isGenerating?: boolean; // Loading state for AI generation
 }
 
 export type MessageCommand =
@@ -34,6 +40,9 @@ export type MessageCommand =
   | 'openAISettings'
   | 'openFile'
   | 'updateUsage'
+  | 'updateAIGenerated'
+  | 'appendAIGeneratedChunk'
+  | 'setGenerating'
   | 'generationError';
 
 export interface WebviewMessage {
@@ -41,4 +50,7 @@ export interface WebviewMessage {
   filePath?: string;
   lineNumber?: number;
   usage?: string;
+  aiGenerated?: string;
+  chunk?: string;
+  isGenerating?: boolean;
 }

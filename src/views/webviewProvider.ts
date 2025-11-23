@@ -31,7 +31,8 @@ export class WebviewProvider {
         usage: string,
         history: HistoryEntry[],
         aiEnabled: boolean = false,
-        realUsages: UsageExample[] = []
+        realUsages: UsageExample[] = [],
+        usageLocation?: { filePath: string; lineNumber: number }
     ): void {
         try {
             // Store the current active editor before showing webview
@@ -44,7 +45,7 @@ export class WebviewProvider {
                 this.createPanel(functionInfo);
             }
 
-            this.updatePanelContent(functionInfo, usage, history, aiEnabled, realUsages);
+            this.updatePanelContent(functionInfo, usage, history, aiEnabled, realUsages, usageLocation);
         } catch (error) {
             logError('Error showing function usage', error);
             vscode.window.showErrorMessage('Failed to display function usage');
@@ -138,7 +139,8 @@ export class WebviewProvider {
         usage: string,
         history: HistoryEntry[],
         aiEnabled: boolean,
-        realUsages: UsageExample[]
+        realUsages: UsageExample[],
+        usageLocation?: { filePath: string; lineNumber: number }
     ): void {
         if (!this.currentPanel) {
             return;
@@ -151,7 +153,8 @@ export class WebviewProvider {
             usage,
             history,
             aiEnabled,
-            realUsages
+            realUsages,
+            usageLocation
         );
     }
 
@@ -164,6 +167,45 @@ export class WebviewProvider {
             this.currentPanel.webview.postMessage({
                 command: 'updateUsage',
                 usage: usage
+            });
+        }
+    }
+
+    /**
+     * Update AI generated content in the webview
+     * @param aiGenerated - AI generated content
+     */
+    public updateAIGenerated(aiGenerated: string): void {
+        if (this.currentPanel) {
+            this.currentPanel.webview.postMessage({
+                command: 'updateAIGenerated',
+                aiGenerated: aiGenerated
+            });
+        }
+    }
+
+    /**
+     * Append chunk to AI generated content in the webview (for streaming)
+     * @param chunk - Chunk of AI generated content
+     */
+    public appendAIGeneratedChunk(chunk: string): void {
+        if (this.currentPanel) {
+            this.currentPanel.webview.postMessage({
+                command: 'appendAIGeneratedChunk',
+                chunk: chunk
+            });
+        }
+    }
+
+    /**
+     * Set generating state in the webview
+     * @param isGenerating - Whether AI is currently generating
+     */
+    public setGenerating(isGenerating: boolean): void {
+        if (this.currentPanel) {
+            this.currentPanel.webview.postMessage({
+                command: 'setGenerating',
+                isGenerating: isGenerating
             });
         }
     }
